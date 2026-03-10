@@ -20,8 +20,6 @@ jobs:
 
       - name: Compilation (Xcode)
         run: |
-          # On se déplace dans le dossier contenant le projet avant de compiler
-          cd DemoRunner
           xcodebuild -project DemoRunner.xcodeproj \
                      -scheme DemoRunner \
                      -configuration Release \
