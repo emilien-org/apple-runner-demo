@@ -20,23 +20,15 @@ jobs:
 
       - name: Compilation (Xcode)
         run: |
-          cd DemoRunner
-          # On force un dossier de sortie très simple nommé 'output'
           xcodebuild -project DemoRunner.xcodeproj \
                      -scheme DemoRunner \
                      -configuration Release \
-                     -derivedDataPath ./output \
-                     CODE_SIGNING_ALLOWED=NO \
-                     build
+                     -derivedDataPath ./build \
+                     CODE_SIGNING_ALLOWED=NO
 
-      - name: Localisation du binaire (Debug)
-        run: |
-          echo "--- Contenu du dossier output ---"
-          find DemoRunner/output -name "*.app"
-          
       - name: Archivage pour GitHub
         uses: actions/upload-artifact@v4
         with:
           name: App-Compilee
-          # On prend tout ce qui ressemble à une App dans le dossier output
-          path: DemoRunner/output/**/*.app
+          # On remonte d'un cran car on a fait 'cd DemoRunner' avant
+          path: DemoRunner/build/Build/Products/Release/DemoRunner.app
