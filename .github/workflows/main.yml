@@ -3,7 +3,7 @@ on: [push, workflow_dispatch]
 
 jobs:
   macos-build:
-    runs-on: [self-hosted, macOS]
+    runs-on: [self-hosted, macOS, ARM64]
 
     steps:
       - name: Checkout du code
