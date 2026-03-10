@@ -3,7 +3,7 @@ on: [push, workflow_dispatch]
 
 jobs:
   macos-build:
-    runs-on: [self-hosted, macOS]
+    runs-on: [self-hosted, macOS, ARM64]
 
     steps:
       - name: Checkout du code
@@ -21,7 +21,6 @@ jobs:
       - name: Compilation (Xcode)
         run: |
           # On se déplace dans le dossier contenant le projet avant de compiler
-          cd DemoRunner
           xcodebuild -project DemoRunner.xcodeproj \
                      -scheme DemoRunner \
                      -configuration Release \
