@@ -30,5 +30,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: App-Compilee
-          # On remonte d'un cran car on a fait 'cd DemoRunner' avant
-          path: DemoRunner/build/Build/Products/Release/DemoRunner.app
+          # On cherche tous les fichiers .app dans le dossier build, peu importe la profondeur
+          path: DemoRunner/build/**/*.app
+          # Optionnel : empêche l'étape d'échouer si le fichier est manquant (pour le debug)
+          if-no-files-found: error
