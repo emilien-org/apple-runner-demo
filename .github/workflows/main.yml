@@ -1,0 +1,36 @@
+name: Build DemoRunner
+on: [push, workflow_dispatch]
+
+jobs:
+  macos-build:
+    runs-on: [self-hosted, macOS]
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Identification du Hardware (Scaleway)
+        run: |
+          echo "--- Modèle du Mac ---"
+          sysctl -n hw.model
+          echo "--- Nombre de cœurs CPU ---"
+          sysctl -n hw.ncpu
+          echo "--- Version de macOS ---"
+          sw_vers
+
+      - name: Compilation (Xcode)
+        run: |
+          # On se déplace dans le dossier contenant le projet avant de compiler
+          cd DemoRunner
+          xcodebuild -project DemoRunner.xcodeproj \
+                     -scheme DemoRunner \
+                     -configuration Release \
+                     -derivedDataPath ./build \
+                     CODE_SIGNING_ALLOWED=NO
+
+      - name: Archivage pour GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: App-Compilee
+          # Le chemin pointe vers l'app générée dans le dossier local 'build'
+          path: DemoRunner/build/Build/Products/Release/DemoRunner.app
