@@ -27,8 +27,13 @@ jobs:
             -derivedDataPath ./build \
             CODE_SIGNING_ALLOWED=NO
 
+      - name: Compression de l'App
+        run: |
+          cd build/Build/Products/Release/
+          zip -r ../../../DemoRunner_Archive.zip DemoRunner.app
+
       - name: Archivage pour GitHub
         uses: actions/upload-artifact@v4
         with:
           name: App-Compilee
-          path: build/Build/Products/Release/DemoRunner.app
+          path: DemoRunner_Archive.zip
