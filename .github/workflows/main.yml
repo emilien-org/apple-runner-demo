@@ -18,9 +18,7 @@ jobs:
 
       - name: Compilation et Archivage
         run: |
-          # On s'assure que le dossier de build est propre
           rm -rf ./build
-          
           xcodebuild archive \
             -project DemoRunner.xcodeproj \
             -scheme DemoRunner \
@@ -34,23 +32,23 @@ jobs:
 
       - name: Preparation du dossier d'export
         run: |
-          APP_PATH="./build/DemoRunner.xcarchive/Products/Applications/DemoRunner.app"
+          APP_SRC="./build/DemoRunner.xcarchive/Products/Applications/DemoRunner.app"
           
-          if [ ! -d "$APP_PATH" ]; then
-            echo "Erreur : L'application n'a pas été trouvée dans l'archive."
+          if [ ! -d "$APP_SRC" ]; then
+            echo "Erreur : L'application n'a pas été trouvée."
             exit 1
           fi
 
-          # On crée un dossier temporaire pour l'artifact
-          # Cela évite d'uploader tout le dossier de build Xcode qui est énorme
-          mkdir -p ./dist
-          cp -R "$APP_PATH" ./dist/
+          # On crée un dossier 'export' et on copie l'application DEDANS
+          # La structure sera : ./export/DemoRunner.app/Contents/...
+          mkdir -p ./export
+          cp -R "$APP_SRC" ./export/
 
       - name: Archivage pour GitHub
         uses: actions/upload-artifact@v4
         with:
           name: DemoRunner_macOS_Silicon
-          # En pointant sur le dossier .app, GitHub crée un ZIP
-          # qui contient directement DemoRunner.app à sa racine.
-          path: ./dist/DemoRunner.app
+          # IMPORTANT : En pointant sur ./export/, l'artifact contiendra
+          # le dossier DemoRunner.app et tout son contenu.
+          path: ./export/
           if-no-files-found: error
