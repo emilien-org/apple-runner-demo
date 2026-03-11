@@ -7,7 +7,7 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
-            // Fond dégradé compatible
+            // 1. Fond dégradé dynamique
             LinearGradient(
                 colors: [
                     showSuccess ? Color.green.opacity(0.15) : Color.blue.opacity(0.15),
@@ -20,24 +20,43 @@ struct ContentView: View {
             
             VStack(spacing: 30) {
                 
-                // Icône avec gestion de version pour symbolEffect
+                // 2. LOGO SCALEWAY M2 (Visible uniquement au début)
+                if !showSuccess {
+                    Image("ScalewayLogo") // Assure-toi que le nom correspond dans tes Assets
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 200, height: 200) // Taille augmentée pour plus de visibilité
+                        .saturation(1.2) // Couleurs plus vives
+                        .shadow(color: Color.black.opacity(0.2), radius: 12, x: 0, y: 8) // Ombre pour le relief
+                        .transition(.asymmetric(
+                            insertion: .scale.combined(with: .opacity),
+                            removal: .opacity.combined(with: .scale(scale: 0.5))
+                        ))
+                }
+                
+                // 3. ICÔNE DE SUCCÈS OU NAVETTE
                 Image(systemName: showSuccess ? "checkmark.seal.fill" : "shuttle.fill")
                     .font(.system(size: 70))
-                    // Correction Gradient : On applique le style directement
                     .foregroundStyle(showSuccess ? AnyShapeStyle(.green) : AnyShapeStyle(LinearGradient(colors: [.blue, .cyan], startPoint: .top, endPoint: .bottom)))
-                    // On utilise bounce qui est plus largement supporté
                     .symbolEffect(.bounce, value: isHovering || isLaunching)
                     .shadow(color: showSuccess ? .green.opacity(0.3) : .blue.opacity(0.3), radius: 10)
 
-                VStack(spacing: 8) {
-                    Text(showSuccess ? "Décollage réussi !" : "DemoRunner")
+                // 4. TEXTES PRINCIPAUX
+                VStack(spacing: 10) {
+                    Text(showSuccess ? "Successful take off !" : "Welcome to a Swift app !")
                         .font(.system(size: 36, weight: .black, design: .rounded))
-                    
-                    Text(showSuccess ? "L'application est prête." : "Prêt pour le test de compilation ?")
-                        .font(.headline)
-                        .foregroundStyle(.secondary)
-                }
+                        .multilineTextAlignment(.center)
 
+                    Text(showSuccess
+                         ? "This Swift application is working."
+                         : "Built on a \(Text("Scaleway Apple Silicon").foregroundColor(.scaleway)) server !")
+                        .font(.system(size: 18, weight: .black, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.horizontal)
+                    
+                // 5. BOUTON D'ACTION
                 Button(action: { startDemoSequence() }) {
                     HStack {
                         if isLaunching {
@@ -48,7 +67,7 @@ struct ContentView: View {
                         Text(buttonText)
                             .fontWeight(.bold)
                     }
-                    .frame(width: 180, height: 35)
+                    .frame(width: 200, height: 40)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(showSuccess ? .green : .blue)
@@ -58,27 +77,36 @@ struct ContentView: View {
             }
             .padding(50)
         }
-        .frame(minWidth: 500, minHeight: 400)
-        .animation(.spring(), value: showSuccess)
+        // Taille de fenêtre adaptée au contenu
+        .frame(minWidth: 800, minHeight: 600)
+        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: showSuccess)
         .animation(.easeInOut, value: isLaunching)
     }
     
+    // Libellé dynamique du bouton
     var buttonText: String {
-        if isLaunching { return "Chargement..." }
-        return showSuccess ? "Réinitialiser" : "Lancer la démo"
+        if isLaunching { return "Loading..." }
+        return showSuccess ? "Reset" : "Start the demo"
     }
     
+    // Logique de simulation du lancement
     func startDemoSequence() {
         if showSuccess {
             showSuccess = false
             return
         }
         isLaunching = true
+        // Délai de 2 secondes pour simuler une action
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             isLaunching = false
             showSuccess = true
         }
     }
+}
+
+// Extension pour définir le violet Scaleway
+extension Color {
+    static let scaleway = Color(red: 191/255, green: 149/255, blue: 249/255)
 }
 
 #Preview {
