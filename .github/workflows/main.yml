@@ -18,7 +18,9 @@ jobs:
 
       - name: Compilation et Archivage
         run: |
-          rm -rf ./build
+          # Nettoyage des anciens builds pour éviter les conflits
+          rm -rf ./build ./export_zip
+          
           xcodebuild archive \
             -project DemoRunner.xcodeproj \
             -scheme DemoRunner \
@@ -32,22 +34,30 @@ jobs:
 
       - name: Packaging (Conservation des permissions)
         run: |
-          APP_PATH="./build/DemoRunner.xcarchive/Products/Applications/DemoRunner.app"
+          APP_SRC="./build/DemoRunner.xcarchive/Products/Applications/DemoRunner.app"
           
-          if [ ! -d "$APP_PATH" ]; then
-            echo "Erreur : App non trouvée."
+          if [ ! -d "$APP_SRC" ]; then
+            echo "Erreur : L'application n'a pas été trouvée."
             exit 1
           fi
 
-          # On utilise ditto pour créer le zip car il préserve les permissions (+x)
-          # On crée DemoRunner.app.zip qui contiendra le dossier .app
-          ditto -c -k --sequesterRsrc "$APP_PATH" DemoRunner_Silicon.zip
+          # 1. On crée un dossier dédié à l'export
+          mkdir -p ./export_zip
+          
+          # 2. On compresse avec 'ditto' : 
+          # - Préserve les permissions UNIX (évite le chmod manuel)
+          # - Préserve les ressources macOS (icônes, métadonnées)
+          # - Inclut le dossier .app à la racine du zip
+          ditto -c -k --sequesterRsrc "$APP_SRC" ./export_zip/DemoRunner_Silicon.zip
+          
+          echo "Packaging terminé : ./export_zip/DemoRunner_Silicon.zip"
 
       - name: Archivage pour GitHub
         uses: actions/upload-artifact@v4
         with:
-          name: DemoRunner_Final_Package
-          # On upload le fichier ZIP lui-même, pas le dossier.
-          # GitHub ne le re-zippera pas.
-          path: DemoRunner_Silicon.zip
+          name: DemoRunner_macOS_Silicon
+          # On pointe sur le DOSSIER export_zip.
+          # GitHub va zipper le contenu de ce dossier.
+          # Vous n'aurez qu'un seul fichier à l'intérieur : votre zip prêt à l'emploi.
+          path: ./export_zip/
           if-no-files-found: error
