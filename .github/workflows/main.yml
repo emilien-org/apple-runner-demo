@@ -12,28 +12,37 @@ jobs:
       - name: Checkout du code
         uses: actions/checkout@v4
 
-      - name: Compilation via Archive
+      - name: Compilation et Archivage
         run: |
           xcodebuild archive \
             -project DemoRunner.xcodeproj \
             -scheme DemoRunner \
             -configuration Release \
-            -archivePath ./DemoRunner.xcarchive \
+            -archivePath ./build/DemoRunner.xcarchive \
+            -derivedDataPath ./build/DerivedData \
             MACOSX_DEPLOYMENT_TARGET=14.0 \
             CODE_SIGNING_ALLOWED=NO \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES
+            CODE_SIGNING_REQUIRED=NO \
+            clean archive
 
-      - name: Extraction et Packaging Correct
+      - name: Packaging de l'Application
         run: |
-          # 1. On récupère l'app
-          cp -R ./DemoRunner.xcarchive/Products/Applications/DemoRunner.app ./DemoRunner.app
+          # Définition du chemin source dans l'archive
+          APP_PATH="./build/DemoRunner.xcarchive/Products/Applications/DemoRunner.app"
           
-          # 2. On crée le ZIP en pointant sur le .app (et pas ce qu'il y a dedans)
-          # La commande 'ditto' est cruciale ici
-          ditto -c -k --sequesterRsrc ./DemoRunner.app DemoRunner_Final.zip
+          # Vérification de la présence de l'App
+          if [ ! -d "$APP_PATH" ]; then
+            echo "Erreur : L'application n'a pas été trouvée dans l'archive."
+            exit 1
+          fi
+
+          # Création du ZIP avec ditto (préserve les permissions et métadonnées)
+          # On évite l'étape 'cp -R' pour gagner du temps et de l'espace
+          ditto -c -k --sequesterRsrc "$APP_PATH" DemoRunner_ARM64.zip
 
       - name: Archivage pour GitHub
         uses: actions/upload-artifact@v4
         with:
-          name: MonApp_macOS
-          path: DemoRunner_Final.zip
+          name: DemoRunner_macOS_Silicon
+          path: DemoRunner_ARM64.zip
+          if-no-files-found: error
