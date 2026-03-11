@@ -12,30 +12,37 @@ jobs:
       - name: Checkout du code
         uses: actions/checkout@v4
 
-      - name: Nettoyage
-        run: rm -rf build/ DemoRunner_macOS.zip
-
-      - name: Compilation (Xcode)
+      - name: Nettoyage des dossiers
         run: |
-          xcodebuild clean build \
+          rm -rf build/
+          rm -rf DemoRunner.xcarchive
+          rm -f DemoRunner_macOS.zip
+
+      - name: Création de l'Archive (Full Bundle)
+        run: |
+          # L'action 'archive' regroupe TOUT : code, assets, et infos de rendu
+          xcodebuild archive \
             -project DemoRunner.xcodeproj \
             -scheme DemoRunner \
             -configuration Release \
-            -destination 'platform=macOS,arch=arm64' \
-            -derivedDataPath ./build \
+            -archivePath ./DemoRunner.xcarchive \
             CODE_SIGNING_ALLOWED=NO \
             AD_HOC_CODE_SIGNING_ALLOWED=YES
 
-      - name: Compression de l'App
+      - name: Extraction et Packaging
         run: |
-          # On cherche l'app dans le dossier build et on crée le zip à la racine
-          # La commande 'find' permet d'être sûr de localiser le .app peu importe la profondeur
-          APP_PATH=$(find build -name "DemoRunner.app" -type d | head -n 1)
-          echo "App trouvée ici : $APP_PATH"
-          ditto -c -k --sequesterRsrc "$APP_PATH" DemoRunner_macOS.zip
+          # On extrait l'application du dossier d'archive vers la racine
+          cp -R ./DemoRunner.xcarchive/Products/Applications/DemoRunner.app ./DemoRunner.app
+          
+          # On vérifie la présence du binaire avant de zipper
+          ls -l ./DemoRunner.app/Contents/MacOS/DemoRunner
+          
+          # On compresse avec 'ditto' pour garder les droits macOS intacts
+          ditto -c -k --sequesterRsrc ./DemoRunner.app DemoRunner_macOS.zip
 
       - name: Archivage pour GitHub
         uses: actions/upload-artifact@v4
         with:
-          name: App-macOS
+          name: App-macOS-Complete
           path: DemoRunner_macOS.zip
+          retention-days: 5
