@@ -29,18 +29,16 @@ jobs:
         run: |
           APP_PATH="./build/DemoRunner.xcarchive/Products/Applications/DemoRunner.app"
           
+          # Vérification de la présence de l'App
           if [ ! -d "$APP_PATH" ]; then
-            echo "Erreur : L'application n'a pas été trouvée."
+            echo "Erreur : L'application n'a pas été trouvée dans l'archive."
             exit 1
           fi
 
-          # Correction ici : on donne le nom de l'app en cible pour que 
-          # l'archive contienne "DemoRunner.app/Contents/..."
-          ditto -c -k --sequesterRsrc "$APP_PATH" "DemoRunner.app"
-          
-          # On renomme le zip final pour l'artifact
-          mv "DemoRunner.app.zip" DemoRunner_ARM64.zip
-
+          # On crée directement le ZIP final. 
+          # En pointant sur $APP_PATH, ditto inclut le dossier .app lui-même dans l'archive.
+          ditto -c -k --sequesterRsrc "$APP_PATH" DemoRunner_ARM64.zip
+          echo "Archive créée avec succès : DemoRunner_ARM64.zip"
       - name: Archivage pour GitHub
         uses: actions/upload-artifact@v4
         with:
