@@ -7,37 +7,42 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
-            // --- FOND OPTIMISÉ (MOINS TRANSPARENT) ---
+            // --- FOND PREMIUM TEINTÉ (GLASSMORPHISM) ---
             ZStack {
-                // 1. L'effet de flou de base (Vibrant Material)
+                // 1. Effet de flou natif macOS
                 VisualEffectView(material: .underWindowBackground, blendingMode: .behindWindow)
                 
-                // 2. LA COUCHE D'OPACITÉ : Un fond blanc très léger qui "fixe" la transparence
-                Color.white.opacity(0.6)
+                // 2. La teinte subtile (Violet Scaleway au début, Vert au succès)
+                (showSuccess ? Color.green : Color.scaleway)
+                    .opacity(0.06)
+                    .animation(.easeInOut(duration: 0.8), value: showSuccess)
                 
-                // 3. Les cercles lumineux de profondeur (légèrement ajustés)
+                // 3. Couche d'opacité pour stabiliser le fond
+                Color.white.opacity(0.45)
+                
+                // 4. Cercles de lumière pour la profondeur
                 ZStack {
                     Circle()
-                        .fill(showSuccess ? Color.green.opacity(0.12) : Color.blue.opacity(0.12))
-                        .frame(width: 300, height: 300)
-                        .blur(radius: 60)
-                        .offset(x: -150, y: -100)
+                        .fill(showSuccess ? Color.green.opacity(0.2) : Color.blue.opacity(0.15))
+                        .frame(width: 450, height: 450)
+                        .blur(radius: 80)
+                        .offset(x: -200, y: -150)
                     
                     Circle()
-                        .fill(Color.purple.opacity(0.12))
-                        .frame(width: 300, height: 300)
-                        .blur(radius: 60)
-                        .offset(x: 150, y: 100)
+                        .fill(Color.scaleway.opacity(0.25))
+                        .frame(width: 450, height: 450)
+                        .blur(radius: 80)
+                        .offset(x: 200, y: 150)
                 }
             }
             .ignoresSafeArea()
-            .allowsHitTesting(false) // Pour ne pas bloquer les clics sur l'interface
+            .allowsHitTesting(false)
             
             VStack(spacing: 35) {
                 
-                // LOGO M2 (Optimisé)
+                // --- LOGO M2 (S'efface au succès) ---
                 if !showSuccess {
-                    Image("ScalewayLogo") // Assure-toi que le nom correspond dans tes Assets
+                    Image("ScalewayLogo") // Nom dans Assets.xcassets
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 140, height: 140)
@@ -49,14 +54,14 @@ struct ContentView: View {
                         ))
                 }
                 
-                // ICÔNE DE SUCCÈS OU NAVETTE
+                // --- ICÔNE DYNAMIQUE ---
                 Image(systemName: showSuccess ? "checkmark.seal.fill" : "shuttle.fill")
                     .font(.system(size: 70))
                     .foregroundStyle(showSuccess ? AnyShapeStyle(.green) : AnyShapeStyle(LinearGradient(colors: [.blue, .cyan], startPoint: .top, endPoint: .bottom)))
                     .symbolEffect(.bounce, value: isHovering || isLaunching)
                     .shadow(color: showSuccess ? .green.opacity(0.3) : .blue.opacity(0.3), radius: 10)
 
-                // TEXTES
+                // --- ZONE TEXTE ---
                 VStack(spacing: 12) {
                     Text(showSuccess ? "Successful take off !" : "Welcome to a Swift app !")
                         .font(.system(size: 36, weight: .black, design: .rounded))
@@ -70,7 +75,7 @@ struct ContentView: View {
                         .multilineTextAlignment(.center)
                 }
                     
-                // BOUTON
+                // --- BOUTON D'ACTION ---
                 Button(action: { startDemoSequence() }) {
                     HStack {
                         if isLaunching {
@@ -91,7 +96,7 @@ struct ContentView: View {
             }
             .padding(50)
         }
-        .frame(minWidth: 600, minHeight: 600)
+        .frame(minWidth: 600, minHeight: 650)
         .animation(.spring(response: 0.6, dampingFraction: 0.8), value: showSuccess)
         .animation(.easeInOut, value: isLaunching)
     }
@@ -102,9 +107,12 @@ struct ContentView: View {
     }
     
     func startDemoSequence() {
-        if showSuccess { showSuccess = false; return }
+        if showSuccess {
+            showSuccess = false
+            return
+        }
         isLaunching = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             isLaunching = false
             showSuccess = true
         }
@@ -130,7 +138,9 @@ struct VisualEffectView: NSViewRepresentable {
     }
 }
 
+// --- EXTENSION COULEURS ---
 extension Color {
+    // Violet Scaleway (Ultraviolet)
     static let scaleway = Color(red: 191/255, green: 149/255, blue: 249/255)
 }
 
