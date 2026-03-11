@@ -6,12 +6,13 @@ env:
 
 jobs:
   macos-build:
+    # Utilisation de votre runner auto-hébergé sur Scaleway (Apple Silicon)
     runs-on: [self-hosted, macOS, ARM64]
 
     steps:
       - name: Checkout du code
         uses: actions/checkout@v4
-    
+
       - name: Identification du Hardware (Scaleway)
         run: |
           echo "--- Modèle du Mac ---"
@@ -20,7 +21,11 @@ jobs:
 
       - name: Compilation et Archivage
         run: |
+          # Nettoyage des anciens builds
           rm -rf ./build
+          
+          # Création de l'archive Xcode
+          # Note: CODE_SIGNING_ALLOWED=NO est utilisé car il s'agit d'un build de démo sans certificat
           xcodebuild archive \
             -project DemoRunner.xcodeproj \
             -scheme DemoRunner \
@@ -32,9 +37,24 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             clean archive
 
+      - name: Création du ZIP
+        run: |
+          # Chemin précis vers l'exécutable .app à l'intérieur de l'archive
+          APP_PATH="./build/DemoRunner.xcarchive/Products/Applications/DemoRunner.app"
+          
+          # Vérification de l'existence du fichier avant compression
+          if [ -d "$APP_PATH" ]; then
+            echo "Application trouvée, création du ZIP..."
+            # ditto est préférable à 'zip' sur macOS pour préserver les métadonnées Apple
+            ditto -c -k --sequesterRsrc "$APP_PATH" DemoRunner_Silicon.zip
+          else
+            echo "Erreur : Le fichier .app est introuvable dans l'archive."
+            exit 1
+          fi
+
       - name: Archivage pour GitHub
         uses: actions/upload-artifact@v4
         with:
-          name: DemoRunner
-          path: build/Build/Products/Release/DemoRunner.app
+          name: DemoRunner_App_Export
+          path: DemoRunner_Silicon.zip
           if-no-files-found: error
