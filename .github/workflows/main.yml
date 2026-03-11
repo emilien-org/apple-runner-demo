@@ -52,7 +52,7 @@ jobs:
             -scheme DemoRunner \
             -configuration Release \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath ./build/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
