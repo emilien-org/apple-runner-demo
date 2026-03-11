@@ -55,6 +55,6 @@ jobs:
       - name: Archivage pour GitHub
         uses: actions/upload-artifact@v4
         with:
-          name: DemoRunner_App_Export
+          name: DemoRunner_App_MacOS
           path: DemoRunner_Silicon.zip
           if-no-files-found: error
