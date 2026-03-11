@@ -12,7 +12,7 @@ jobs:
       - name: Checkout du code
         uses: actions/checkout@v4
     
-    - name: Identification du Hardware (Scaleway)
+      - name: Identification du Hardware (Scaleway)
         run: |
           echo "--- Modèle du Mac ---"
           sysctl -n hw.model
