@@ -12,8 +12,8 @@ jobs:
       - name: Checkout du code
         uses: actions/checkout@v4
 
-      - name: Nettoyage des anciens builds
-        run: rm -rf build/
+      - name: Nettoyage
+        run: rm -rf build/ DemoRunner_macOS.zip
 
       - name: Compilation (Xcode)
         run: |
@@ -27,10 +27,12 @@ jobs:
             AD_HOC_CODE_SIGNING_ALLOWED=YES
 
       - name: Compression de l'App
-        # On utilise une commande zip qui préserve les droits d'exécution macOS
         run: |
-          cd build/Build/Products/Release/
-          ditto -c -k --sequesterRsrc DemoRunner.app ../../../DemoRunner_macOS.zip
+          # On cherche l'app dans le dossier build et on crée le zip à la racine
+          # La commande 'find' permet d'être sûr de localiser le .app peu importe la profondeur
+          APP_PATH=$(find build -name "DemoRunner.app" -type d | head -n 1)
+          echo "App trouvée ici : $APP_PATH"
+          ditto -c -k --sequesterRsrc "$APP_PATH" DemoRunner_macOS.zip
 
       - name: Archivage pour GitHub
         uses: actions/upload-artifact@v4
