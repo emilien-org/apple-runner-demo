@@ -1,4 +1,4 @@
-name: Build DemoRunner
+name: Build DemoRunner Multi-Platform
 on: [push, workflow_dispatch]
 
 env:
@@ -12,27 +12,41 @@ jobs:
       - name: Checkout du code
         uses: actions/checkout@v4
 
-      - name: Identification du Hardware (Scaleway)
-        run: |
-          echo "--- Modèle du Mac ---"
-          sysctl -n hw.model
-          sw_vers
-
-      - name: Compilation (Xcode)
+      # --- DESTINATION 1 : macOS ---
+      - name: Compilation pour macOS
         run: |
           xcodebuild clean build \
             -project DemoRunner.xcodeproj \
             -scheme DemoRunner \
             -configuration Release \
-            -derivedDataPath ./build \
+            -destination 'platform=macOS' \
+            -derivedDataPath ./build_mac \
             CODE_SIGNING_ALLOWED=NO
 
-      - name: Compression de l'App
-        run: |
-          zip -r DemoRunner_Archive.zip build/Build/Products/Release/DemoRunner.app
+      - name: Compression App macOS
+        run: zip -r DemoRunner_macOS.zip build_mac/Build/Products/Release/DemoRunner.app
 
+      # --- DESTINATION 2 : iOS (Simulateur) ---
+      # Note : On build pour simulateur car sans signature (CODE_SIGNING_ALLOWED=NO),
+      # on ne peut pas générer un fichier .ipa pour un vrai iPhone.
+      - name: Compilation pour iOS (Simulateur)
+        run: |
+          xcodebuild build \
+            -project DemoRunner.xcodeproj \
+            -scheme DemoRunner \
+            -configuration Release \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath ./build_ios \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Compression App iOS
+        run: zip -r DemoRunner_iOS.zip build_ios/Build/Products/Release-iphonesimulator/DemoRunner.app
+
+      # --- ARCHIVAGE DES DEUX FICHIERS ---
       - name: Archivage pour GitHub
         uses: actions/upload-artifact@v4
         with:
-          name: App-Compilee
-          path: DemoRunner_Archive.zip
+          name: Apps-Multiples
+          path: |
+            DemoRunner_macOS.zip
+            DemoRunner_iOS.zip
