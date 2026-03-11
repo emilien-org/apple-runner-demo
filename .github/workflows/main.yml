@@ -1,6 +1,10 @@
 name: Build DemoRunner
 on: [push, workflow_dispatch]
 
+# On définit la variable globale pour Node.js 24 ici
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   macos-build:
     runs-on: [self-hosted, macOS, ARM64]
@@ -13,22 +17,20 @@ jobs:
         run: |
           echo "--- Modèle du Mac ---"
           sysctl -n hw.model
-          echo "--- Nombre de cœurs CPU ---"
-          sysctl -n hw.ncpu
-          echo "--- Version de macOS ---"
           sw_vers
 
       - name: Compilation (Xcode)
         run: |
-          xcodebuild -project DemoRunner.xcodeproj \
-                     -scheme DemoRunner \
-                     -configuration Release \
-                     -derivedDataPath ./build \
-                     CODE_SIGNING_ALLOWED=NO
+          xcodebuild clean build \
+            -project DemoRunner.xcodeproj \
+            -scheme DemoRunner \
+            -configuration Release \
+            -derivedDataPath ./build \
+            CODE_SIGNING_ALLOWED=NO
 
       - name: Archivage pour GitHub
         uses: actions/upload-artifact@v4
         with:
           name: App-Compilee
-          # On remonte d'un cran car on a fait 'cd DemoRunner' avant
-          path: DemoRunner/build/Build/Products/Release/DemoRunner.app
+          # CORRECTION : On retire 'DemoRunner/' au début
+          path: build/Build/Products/Release/DemoRunner.app
