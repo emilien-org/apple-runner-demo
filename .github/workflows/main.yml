@@ -1,7 +1,6 @@
 name: Build DemoRunner
 on: [push, workflow_dispatch]
 
-# On définit la variable globale pour Node.js 24 ici
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -32,5 +31,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: App-Compilee
-          # CORRECTION : On retire 'DemoRunner/' au début
           path: build/Build/Products/Release/DemoRunner.app
