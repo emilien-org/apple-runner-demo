@@ -2,88 +2,82 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var isHovering = false
-    @State private var rotation: Double = 0
+    @State private var isLaunching = false
+    @State private var showSuccess = false
     
     var body: some View {
         ZStack {
-            // 1. Fond dynamique (Gradient animé)
-            LinearGradient(colors: [.blue.opacity(0.3), .purple.opacity(0.3)],
-                           startPoint: .topLeading,
-                           endPoint: .bottomTrailing)
-                .ignoresSafeArea()
+            // Fond dégradé compatible
+            LinearGradient(
+                colors: [
+                    showSuccess ? Color.green.opacity(0.15) : Color.blue.opacity(0.15),
+                    Color.purple.opacity(0.1)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             
-            // 2. Effet de flou "Glassmorphism"
-            VisualEffectView(material: .hudWindow, blendingMode: .withinWindow)
-                .ignoresSafeArea()
-            
-            VStack(spacing: 25) {
-                // 3. Icône SF Symbol animée
-                Image(systemName: "shuttle.fill")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 80, height: 80)
-                    .foregroundStyle(
-                        .linearGradient(colors: [.cyan, .blue],
-                                        startPoint: .top,
-                                        endPoint: .bottom)
-                    )
-                    .shadow(color: .blue.opacity(0.5), radius: 10)
-                    .rotationEffect(.degrees(rotation))
-                    .onAppear {
-                        withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
-                            rotation = 15
-                        }
-                    }
+            VStack(spacing: 30) {
                 
-                // 4. Texte avec dégradé et typographie forte
-                VStack(spacing: 5) {
-                    Text("DemoRunner")
-                        .font(.system(size: 40, weight: .black, design: .rounded))
-                        .foregroundStyle(.primary)
+                // Icône avec gestion de version pour symbolEffect
+                Image(systemName: showSuccess ? "checkmark.seal.fill" : "shuttle.fill")
+                    .font(.system(size: 70))
+                    // Correction Gradient : On applique le style directement
+                    .foregroundStyle(showSuccess ? AnyShapeStyle(.green) : AnyShapeStyle(LinearGradient(colors: [.blue, .cyan], startPoint: .top, endPoint: .bottom)))
+                    // On utilise bounce qui est plus largement supporté
+                    .symbolEffect(.bounce, value: isHovering || isLaunching)
+                    .shadow(color: showSuccess ? .green.opacity(0.3) : .blue.opacity(0.3), radius: 10)
+
+                VStack(spacing: 8) {
+                    Text(showSuccess ? "Décollage réussi !" : "DemoRunner")
+                        .font(.system(size: 36, weight: .black, design: .rounded))
                     
-                    Text("Prochaine étape : La Lune 🚀")
+                    Text(showSuccess ? "L'application est prête." : "Prêt pour le test de compilation ?")
                         .font(.headline)
                         .foregroundStyle(.secondary)
                 }
-                
-                // 5. Bouton interactif avec effet au survol
-                Button(action: { print("Action lancée !") }) {
-                    Text("Lancer la démo")
-                        .fontWeight(.bold)
-                        .padding(.horizontal, 30)
-                        .padding(.vertical, 12)
+
+                Button(action: { startDemoSequence() }) {
+                    HStack {
+                        if isLaunching {
+                            ProgressView()
+                                .controlSize(.small)
+                                .padding(.trailing, 5)
+                        }
+                        Text(buttonText)
+                            .fontWeight(.bold)
+                    }
+                    .frame(width: 180, height: 35)
                 }
-                .buttonStyle(.plain)
-                .background(isHovering ? Color.blue : Color.primary.opacity(0.1))
-                .clipShape(Capsule())
+                .buttonStyle(.borderedProminent)
+                .tint(showSuccess ? .green : .blue)
+                .disabled(isLaunching)
                 .scaleEffect(isHovering ? 1.05 : 1.0)
-                .animation(.spring(response: 0.3), value: isHovering)
-                .onHover { hovering in
-                    isHovering = hovering
-                }
+                .onHover { isHovering = $0 }
             }
-            .padding(40)
+            .padding(50)
         }
         .frame(minWidth: 500, minHeight: 400)
-    }
-}
-
-// Utilitaire pour l'effet de flou natif macOS
-struct VisualEffectView: NSViewRepresentable {
-    let material: NSVisualEffectView.Material
-    let blendingMode: NSVisualEffectView.BlendingMode
-    
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let view = NSVisualEffectView()
-        view.material = material
-        view.blendingMode = blendingMode
-        view.state = .active
-        return view
+        .animation(.spring(), value: showSuccess)
+        .animation(.easeInOut, value: isLaunching)
     }
     
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
-        nsView.material = material
-        nsView.blendingMode = blendingMode
+    var buttonText: String {
+        if isLaunching { return "Chargement..." }
+        return showSuccess ? "Réinitialiser" : "Lancer la démo"
+    }
+    
+    func startDemoSequence() {
+        if showSuccess {
+            showSuccess = false
+            return
+        }
+        isLaunching = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            isLaunching = false
+            showSuccess = true
+        }
     }
 }
 
