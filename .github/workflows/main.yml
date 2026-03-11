@@ -12,37 +12,30 @@ jobs:
       - name: Checkout du code
         uses: actions/checkout@v4
 
-      - name: Nettoyage des dossiers
-        run: |
-          rm -rf build/
-          rm -rf DemoRunner.xcarchive
-          rm -f DemoRunner_macOS.zip
+      - name: Nettoyage
+        run: rm -rf build/ DemoRunner.xcarchive DemoRunner_macOS.zip DemoRunner.app
 
-      - name: Création de l'Archive (Full Bundle)
+      - name: Compilation via Archive
         run: |
-          # L'action 'archive' regroupe TOUT : code, assets, et infos de rendu
+          # On force MACOSX_DEPLOYMENT_TARGET à 14.0 pour être sûr que ton Mac puisse l'ouvrir
           xcodebuild archive \
             -project DemoRunner.xcodeproj \
             -scheme DemoRunner \
             -configuration Release \
             -archivePath ./DemoRunner.xcarchive \
-            CODE_SIGNING_ALLOWED=NO \
+            MACOSX_DEPLOYMENT_TARGET=14.0 \
+            CODE_SIGN_ALLOWED=NO \
             AD_HOC_CODE_SIGNING_ALLOWED=YES
 
       - name: Extraction et Packaging
         run: |
-          # On extrait l'application du dossier d'archive vers la racine
           cp -R ./DemoRunner.xcarchive/Products/Applications/DemoRunner.app ./DemoRunner.app
-          
-          # On vérifie la présence du binaire avant de zipper
-          ls -l ./DemoRunner.app/Contents/MacOS/DemoRunner
-          
-          # On compresse avec 'ditto' pour garder les droits macOS intacts
+          # On vérifie visuellement la version dans les logs
+          /usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" ./DemoRunner.app/Contents/Info.plist
           ditto -c -k --sequesterRsrc ./DemoRunner.app DemoRunner_macOS.zip
 
       - name: Archivage pour GitHub
         uses: actions/upload-artifact@v4
         with:
-          name: App-macOS-Complete
+          name: App-macOS
           path: DemoRunner_macOS.zip
-          retention-days: 5
