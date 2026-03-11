@@ -29,8 +29,7 @@ jobs:
 
       - name: Compression de l'App
         run: |
-          cd build/Build/Products/Release/
-          zip -r ../../../DemoRunner_Archive.zip DemoRunner.app
+          zip -r DemoRunner_Archive.zip build/Build/Products/Release/DemoRunner.app
 
       - name: Archivage pour GitHub
         uses: actions/upload-artifact@v4
