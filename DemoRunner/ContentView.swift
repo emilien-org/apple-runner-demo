@@ -7,42 +7,57 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
-            // 1. Fond dégradé dynamique
-            LinearGradient(
-                colors: [
-                    showSuccess ? Color.green.opacity(0.15) : Color.blue.opacity(0.15),
-                    Color.purple.opacity(0.1)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-            
-            VStack(spacing: 30) {
+            // --- FOND OPTIMISÉ (MOINS TRANSPARENT) ---
+            ZStack {
+                // 1. L'effet de flou de base (Vibrant Material)
+                VisualEffectView(material: .underWindowBackground, blendingMode: .behindWindow)
                 
-                // 2. LOGO SCALEWAY M2 (Visible uniquement au début)
+                // 2. LA COUCHE D'OPACITÉ : Un fond blanc très léger qui "fixe" la transparence
+                Color.white.opacity(0.6)
+                
+                // 3. Les cercles lumineux de profondeur (légèrement ajustés)
+                ZStack {
+                    Circle()
+                        .fill(showSuccess ? Color.green.opacity(0.12) : Color.blue.opacity(0.12))
+                        .frame(width: 300, height: 300)
+                        .blur(radius: 60)
+                        .offset(x: -150, y: -100)
+                    
+                    Circle()
+                        .fill(Color.purple.opacity(0.12))
+                        .frame(width: 300, height: 300)
+                        .blur(radius: 60)
+                        .offset(x: 150, y: 100)
+                }
+            }
+            .ignoresSafeArea()
+            .allowsHitTesting(false) // Pour ne pas bloquer les clics sur l'interface
+            
+            VStack(spacing: 35) {
+                
+                // LOGO M2 (Optimisé)
                 if !showSuccess {
                     Image("ScalewayLogo") // Assure-toi que le nom correspond dans tes Assets
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 200, height: 200) // Taille augmentée pour plus de visibilité
-                        .saturation(1.2) // Couleurs plus vives
-                        .shadow(color: Color.black.opacity(0.2), radius: 12, x: 0, y: 8) // Ombre pour le relief
+                        .frame(width: 140, height: 140)
+                        .saturation(1.2)
+                        .shadow(color: Color.black.opacity(0.2), radius: 12, x: 0, y: 8)
                         .transition(.asymmetric(
                             insertion: .scale.combined(with: .opacity),
                             removal: .opacity.combined(with: .scale(scale: 0.5))
                         ))
                 }
                 
-                // 3. ICÔNE DE SUCCÈS OU NAVETTE
+                // ICÔNE DE SUCCÈS OU NAVETTE
                 Image(systemName: showSuccess ? "checkmark.seal.fill" : "shuttle.fill")
                     .font(.system(size: 70))
                     .foregroundStyle(showSuccess ? AnyShapeStyle(.green) : AnyShapeStyle(LinearGradient(colors: [.blue, .cyan], startPoint: .top, endPoint: .bottom)))
                     .symbolEffect(.bounce, value: isHovering || isLaunching)
                     .shadow(color: showSuccess ? .green.opacity(0.3) : .blue.opacity(0.3), radius: 10)
 
-                // 4. TEXTES PRINCIPAUX
-                VStack(spacing: 10) {
+                // TEXTES
+                VStack(spacing: 12) {
                     Text(showSuccess ? "Successful take off !" : "Welcome to a Swift app !")
                         .font(.system(size: 36, weight: .black, design: .rounded))
                         .multilineTextAlignment(.center)
@@ -54,9 +69,8 @@ struct ContentView: View {
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
-                .padding(.horizontal)
                     
-                // 5. BOUTON D'ACTION
+                // BOUTON
                 Button(action: { startDemoSequence() }) {
                     HStack {
                         if isLaunching {
@@ -77,26 +91,19 @@ struct ContentView: View {
             }
             .padding(50)
         }
-        // Taille de fenêtre adaptée au contenu
-        .frame(minWidth: 800, minHeight: 600)
+        .frame(minWidth: 600, minHeight: 600)
         .animation(.spring(response: 0.6, dampingFraction: 0.8), value: showSuccess)
         .animation(.easeInOut, value: isLaunching)
     }
     
-    // Libellé dynamique du bouton
     var buttonText: String {
         if isLaunching { return "Loading..." }
         return showSuccess ? "Reset" : "Start the demo"
     }
     
-    // Logique de simulation du lancement
     func startDemoSequence() {
-        if showSuccess {
-            showSuccess = false
-            return
-        }
+        if showSuccess { showSuccess = false; return }
         isLaunching = true
-        // Délai de 2 secondes pour simuler une action
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             isLaunching = false
             showSuccess = true
@@ -104,7 +111,25 @@ struct ContentView: View {
     }
 }
 
-// Extension pour définir le violet Scaleway
+// --- UTILITAIRE POUR L'EFFET DE FLOU MACOS ---
+struct VisualEffectView: NSViewRepresentable {
+    let material: NSVisualEffectView.Material
+    let blendingMode: NSVisualEffectView.BlendingMode
+    
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = material
+        view.blendingMode = blendingMode
+        view.state = .active
+        return view
+    }
+    
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
+        nsView.material = material
+        nsView.blendingMode = blendingMode
+    }
+}
+
 extension Color {
     static let scaleway = Color(red: 191/255, green: 149/255, blue: 249/255)
 }
