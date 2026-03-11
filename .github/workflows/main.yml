@@ -1,4 +1,4 @@
-name: Build DemoRunner Multi-Platform
+name: Build DemoRunner macOS
 on: [push, workflow_dispatch]
 
 env:
@@ -12,41 +12,28 @@ jobs:
       - name: Checkout du code
         uses: actions/checkout@v4
 
-      # --- DESTINATION 1 : macOS ---
-      - name: Compilation pour macOS
+      - name: Nettoyage des anciens builds
+        run: rm -rf build/
+
+      - name: Compilation (Xcode)
         run: |
           xcodebuild clean build \
             -project DemoRunner.xcodeproj \
             -scheme DemoRunner \
             -configuration Release \
-            -destination 'platform=macOS' \
-            -derivedDataPath ./build_mac \
-            CODE_SIGNING_ALLOWED=NO
+            -destination 'platform=macOS,arch=arm64' \
+            -derivedDataPath ./build \
+            CODE_SIGNING_ALLOWED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
 
-      - name: Compression App macOS
-        run: zip -r DemoRunner_macOS.zip build_mac/Build/Products/Release/DemoRunner.app
-
-      # --- DESTINATION 2 : iOS (Simulateur) ---
-      # Note : On build pour simulateur car sans signature (CODE_SIGNING_ALLOWED=NO),
-      # on ne peut pas générer un fichier .ipa pour un vrai iPhone.
-      - name: Compilation pour iOS (Simulateur)
+      - name: Compression de l'App
+        # On utilise une commande zip qui préserve les droits d'exécution macOS
         run: |
-          xcodebuild build \
-            -project DemoRunner.xcodeproj \
-            -scheme DemoRunner \
-            -configuration Release \
-            -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath ./build_ios \
-            CODE_SIGNING_ALLOWED=NO
+          cd build/Build/Products/Release/
+          ditto -c -k --sequesterRsrc DemoRunner.app ../../../DemoRunner_macOS.zip
 
-      - name: Compression App iOS
-        run: zip -r DemoRunner_iOS.zip build_ios/Build/Products/Release-iphonesimulator/DemoRunner.app
-
-      # --- ARCHIVAGE DES DEUX FICHIERS ---
       - name: Archivage pour GitHub
         uses: actions/upload-artifact@v4
         with:
-          name: Apps-Multiples
-          path: |
-            DemoRunner_macOS.zip
-            DemoRunner_iOS.zip
+          name: App-macOS
+          path: DemoRunner_macOS.zip
