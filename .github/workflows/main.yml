@@ -1,5 +1,9 @@
 name: Build DemoRunner macOS
-on: [push, workflow_dispatch]
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -14,6 +18,9 @@ jobs:
 
       - name: Compilation et Archivage
         run: |
+          # On s'assure que le dossier de build est propre
+          rm -rf ./build
+          
           xcodebuild archive \
             -project DemoRunner.xcodeproj \
             -scheme DemoRunner \
@@ -25,23 +32,25 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             clean archive
 
-      - name: Packaging de l'Application
+      - name: Preparation du dossier d'export
         run: |
           APP_PATH="./build/DemoRunner.xcarchive/Products/Applications/DemoRunner.app"
           
-          # Vérification de la présence de l'App
           if [ ! -d "$APP_PATH" ]; then
             echo "Erreur : L'application n'a pas été trouvée dans l'archive."
             exit 1
           fi
 
-          # On crée directement le ZIP final. 
-          # En pointant sur $APP_PATH, ditto inclut le dossier .app lui-même dans l'archive.
-          ditto -c -k --sequesterRsrc "$APP_PATH" DemoRunner_ARM64.zip
-          echo "Archive créée avec succès : DemoRunner_ARM64.zip"
+          # On crée un dossier temporaire pour l'artifact
+          # Cela évite d'uploader tout le dossier de build Xcode qui est énorme
+          mkdir -p ./dist
+          cp -R "$APP_PATH" ./dist/
+
       - name: Archivage pour GitHub
         uses: actions/upload-artifact@v4
         with:
           name: DemoRunner_macOS_Silicon
-          path: DemoRunner_ARM64.zip
+          # En pointant sur le dossier .app, GitHub crée un ZIP
+          # qui contient directement DemoRunner.app à sa racine.
+          path: ./dist/DemoRunner.app
           if-no-files-found: error
