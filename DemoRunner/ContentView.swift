@@ -58,4 +58,35 @@ struct ContentView: View {
                 .clipShape(Capsule())
                 .scaleEffect(isHovering ? 1.05 : 1.0)
                 .animation(.spring(response: 0.3), value: isHovering)
-                .onHover {
+                .onHover { hovering in
+                    isHovering = hovering
+                }
+            }
+            .padding(40)
+        }
+        .frame(minWidth: 500, minHeight: 400)
+    }
+}
+
+// Utilitaire pour l'effet de flou natif macOS
+struct VisualEffectView: NSViewRepresentable {
+    let material: NSVisualEffectView.Material
+    let blendingMode: NSVisualEffectView.BlendingMode
+    
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = material
+        view.blendingMode = blendingMode
+        view.state = .active
+        return view
+    }
+    
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
+        nsView.material = material
+        nsView.blendingMode = blendingMode
+    }
+}
+
+#Preview {
+    ContentView()
+}
