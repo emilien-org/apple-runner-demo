@@ -9,8 +9,13 @@ struct ContentView: View {
         ZStack {
             // --- FOND PREMIUM TEINTÉ (GLASSMORPHISM) ---
             ZStack {
-                // 1. Effet de flou natif macOS
+                // 1. Effet de flou (Adaptatif)
+                #if os(macOS)
                 VisualEffectView(material: .underWindowBackground, blendingMode: .behindWindow)
+                #else
+                // Sur iOS, on utilise l'effet Ultra Thin Material natif
+                Rectangle().fill(.ultraThinMaterial)
+                #endif
                 
                 // 2. La teinte subtile (Violet Scaleway au début, Vert au succès)
                 (showSuccess ? Color.green : Color.scaleway)
@@ -42,7 +47,8 @@ struct ContentView: View {
                 
                 // --- LOGO M2 (S'efface au succès) ---
                 if !showSuccess {
-                    Image("ScalewayLogo") // Nom dans Assets.xcassets
+                    // Note: Assurez-vous que l'image est bien dans Assets.xcassets
+                    Image("ScalewayLogo")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 140, height: 140)
@@ -92,11 +98,16 @@ struct ContentView: View {
                 .tint(showSuccess ? .green : .blue)
                 .disabled(isLaunching)
                 .scaleEffect(isHovering ? 1.05 : 1.0)
+                #if os(macOS)
                 .onHover { isHovering = $0 }
+                #endif
             }
             .padding(50)
         }
+        // Sur iOS, on laisse l'app prendre toute la place, sur Mac on fixe une taille
+        #if os(macOS)
         .frame(minWidth: 600, minHeight: 650)
+        #endif
         .animation(.spring(response: 0.6, dampingFraction: 0.8), value: showSuccess)
         .animation(.easeInOut, value: isLaunching)
     }
@@ -119,7 +130,8 @@ struct ContentView: View {
     }
 }
 
-// --- UTILITAIRE POUR L'EFFET DE FLOU MACOS ---
+// --- UTILITAIRE POUR L'EFFET DE FLOU MACOS (Isolé pour iOS) ---
+#if os(macOS)
 struct VisualEffectView: NSViewRepresentable {
     let material: NSVisualEffectView.Material
     let blendingMode: NSVisualEffectView.BlendingMode
@@ -137,10 +149,10 @@ struct VisualEffectView: NSViewRepresentable {
         nsView.blendingMode = blendingMode
     }
 }
+#endif
 
 // --- EXTENSION COULEURS ---
 extension Color {
-    // Violet Scaleway (Ultraviolet)
     static let scaleway = Color(red: 191/255, green: 149/255, blue: 249/255)
 }
 
