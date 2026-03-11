@@ -1,9 +1,5 @@
 name: Build DemoRunner macOS
-
-on:
-  push:
-    branches: [ "main" ]
-  workflow_dispatch:
+on: [push, workflow_dispatch]
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -18,9 +14,7 @@ jobs:
 
       - name: Compilation et Archivage
         run: |
-          # Nettoyage des anciens builds pour éviter les conflits
-          rm -rf ./build ./export_zip
-          
+          rm -rf ./build
           xcodebuild archive \
             -project DemoRunner.xcodeproj \
             -scheme DemoRunner \
@@ -32,32 +26,17 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             clean archive
 
-      - name: Packaging (Conservation des permissions)
+      - name: Création du ZIP (Structure & Permissions)
         run: |
-          APP_SRC="./build/DemoRunner.xcarchive/Products/Applications/DemoRunner.app"
-          
-          if [ ! -d "$APP_SRC" ]; then
-            echo "Erreur : L'application n'a pas été trouvée."
-            exit 1
-          fi
-
-          # 1. On crée un dossier dédié à l'export
-          mkdir -p ./export_zip
-          
-          # 2. On compresse avec 'ditto' : 
-          # - Préserve les permissions UNIX (évite le chmod manuel)
-          # - Préserve les ressources macOS (icônes, métadonnées)
-          # - Inclut le dossier .app à la racine du zip
-          ditto -c -k --sequesterRsrc "$APP_SRC" ./export_zip/DemoRunner_Silicon.zip
-          
-          echo "Packaging terminé : ./export_zip/DemoRunner_Silicon.zip"
+          APP_PATH="./build/DemoRunner.xcarchive/Products/Applications/DemoRunner.app"
+          # ditto crée un zip qui contient le dossier .app (pas juste Contents)
+          # et il garde le bit d'exécution (+x)
+          ditto -c -k --sequesterRsrc "$APP_PATH" DemoRunner_Silicon.zip
 
       - name: Archivage pour GitHub
         uses: actions/upload-artifact@v4
         with:
-          name: DemoRunner_macOS_Silicon
-          # On pointe sur le DOSSIER export_zip.
-          # GitHub va zipper le contenu de ce dossier.
-          # Vous n'aurez qu'un seul fichier à l'intérieur : votre zip prêt à l'emploi.
-          path: ./export_zip/
+          name: DemoRunner_App_Export
+          # On pointe DIRECTEMENT sur le fichier .zip
+          path: DemoRunner_Silicon.zip
           if-no-files-found: error
